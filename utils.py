@@ -150,6 +150,7 @@ def generate_dataset(name, directory):
         df['label'] = label
         dataframes.append(df)
     
+    print(len(dataframes))
     dataset = pd.concat(dataframes, ignore_index=True)
     dataset.to_csv(name + ".csv", index=False)
 
