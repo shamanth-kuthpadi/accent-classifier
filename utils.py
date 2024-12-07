@@ -136,22 +136,32 @@ def extract_features(y, sr):
     return features.T, feature_names  # Transpose to have samples as rows
 
 
-def generate_dataset(name, directory):
-    dataframes = []
+def generate_dataset(directory, MAX_LEN):
+    features_list = []
+    labels = []
 
     for filename in os.listdir(directory):
         f = os.path.join(directory, filename)
-        label = re.match(r"([^_]+)_", filename)
-        label = label.group(1)
+        match = re.match(r"([^_]+)_", filename)
+        if not match:
+            continue  # Skip files that don't match the pattern
 
+        label = match.group(1)
         y, sr = librosa.load(f, sr=None)
-        features, feature_names = extract_features(y, sr)
-        df = pd.DataFrame(features, columns=feature_names)
-        df['label'] = label
-        dataframes.append(df)
+        
+        # Extract and standardize features
+        features, _ = extract_features(y, sr)
+        if features.shape[0] < MAX_LEN:
+            pad_width = MAX_LEN - features.shape[0]
+            features = np.pad(features, ((0, pad_width), (0, 0)), mode='constant')
+        else:
+            features = features[:MAX_LEN]
+        
+        features_list.append(features)
+        labels.append(label)
     
-    print(len(dataframes))
-    dataset = pd.concat(dataframes, ignore_index=True)
-    dataset.to_csv(name + ".csv", index=False)
+    # Convert to NumPy arrays
+    X = np.array(features_list)  # Shape: (num_samples, MAX_LEN, num_features)
+    y = np.array(labels)         # Shape: (num_samples,)
 
-    return dataset
+    return X, y
