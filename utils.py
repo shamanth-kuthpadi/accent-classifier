@@ -140,7 +140,8 @@ def generate_dataset(directory, MAX_LEN):
     features_list = []
     labels = []
 
-    for filename in os.listdir(directory):
+    # Ensure consistent file order
+    for filename in sorted(os.listdir(directory)):  # Sorting added here
         f = os.path.join(directory, filename)
         match = re.match(r"([^_]+)_", filename)
         if not match:
@@ -153,7 +154,8 @@ def generate_dataset(directory, MAX_LEN):
         features, _ = extract_features(y, sr)
         if features.shape[0] < MAX_LEN:
             pad_width = MAX_LEN - features.shape[0]
-            features = np.pad(features, ((0, pad_width), (0, 0)), mode='constant')
+            # Using 'edge' mode for padding with the last valid value
+            features = np.pad(features, ((0, pad_width), (0, 0)), mode='edge')
         else:
             features = features[:MAX_LEN]
         
